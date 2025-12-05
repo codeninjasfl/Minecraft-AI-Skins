@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Minecraft Skin Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Press+Start+2P&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <div class="logo">
+        <span class="title-green">Minecraft AI Skin</span> <span class="title-maker">Maker</span>
+      </div>
+      <p class="subtitle">Next-Gen Neural Texture Synthesis</p>
+    </header>
+
+    <main>
+      <div class="generator-container">
+        <div class="input-group">
+          <input type="text" id="prompt-input" placeholder="Describe your skin (e.g., 'Cyberpunk Samurai')"
+            autocomplete="off">
+          <button id="generate-btn" class="glow-on-hover">
+            <span class="btn-text">GENERATE</span>
+            <span class="loading-spinner hidden"></span>
+          </button>
+        </div>
+
+        <div class="status-log hidden" id="status-log">
+          <div class="log-line">Initializing neural network...</div>
+        </div>
+
+        <div class="result-section hidden" id="result-section">
+          <div class="featured-result">
+            <div class="skin-card main-card">
+              <div class="skin-header">
+                <h2 id="skin-title" class="pixel-text">Skin Name</h2>
+                <span id="variant-label" class="variant-label">Variant 1</span>
+              </div>
+
+              <div class="skin-preview-wrapper main-preview" id="skin-viewer-container">
+                <!-- 3D Viewer Canvas Mounts Here -->
+              </div>
+
+              <div class="variant-controls" id="variant-controls">
+                <!-- Buttons injected here -->
+              </div>
+
+              <a id="download-btn" href="#" target="_blank" class="action-btn download-large">
+                Download Skin / View Details
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <img src="https://www.codeninjas.com/hubfs/Group%201.svg" alt="Code Ninjas" class="footer-logo">
+      <p>Powered by <span class="highlight">Google Gemini 3.0</span></p>
+    </footer>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
