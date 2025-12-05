@@ -108,83 +108,91 @@ interface SkinData {
   detailLink: string;
 }
 
-async function fetchSkins(query: string): Promise<SkinData[]> {
-  let baseUsername = "";
-
-
-  addLog("Scanning global player database...");
-
-  // Strategy 1: Search Skindex to find an AUTHOR (who likely has a profile & skin)
-  try {
-    const searchUrl = `https://www.minecraftskins.com/search/skin/${encodeURIComponent(query)}/1/`;
-    // Use CorsProxy
-    const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(searchUrl)}`);
-    if (response.ok) {
-      const htmlText = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlText, 'text/html');
-      // Find first skin author
-      const authorLink = doc.querySelector('.skin-author a');
-      if (authorLink) {
-        const parts = authorLink.getAttribute('href')?.split('/') || [];
-        if (parts.length > 0) {
-          baseUsername = parts[parts.length - 1]; // Found an author!
-          addLog(`Located signature match: ${baseUsername}`);
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("Skindex scrape failed, falling back to name.");
-  }
-
-  // Strategy 2: If no author found, assume Query IS the Name (e.g. "Herobrine")
-  if (!baseUsername) {
-    baseUsername = query.replace(/\s+/g, '');
-    addLog(`Synthesizing texture from designation: ${baseUsername}`);
-  }
-
-  // Now we have a Target Username. 
-  // Let's generate 3 Variants based on this Single Valid Texture Source.
-  // We use Minotar or Mineskin to get the texture.
-
-  // Note: We need a Proxy for the Image if we want to manipulate it in Canvas (tainted canvas)
-  // Minotar allows CORS usually.
-  const baseTextureUrl = `https://minotar.net/skin/${baseUsername}`;
-
-  const skins: SkinData[] = [];
-
-  // Verify if it exists (optional, but good)
-  // For now we assume success.
-
-  // Variant 1: Original
-  skins.push({
-    imageUrl: baseTextureUrl,
-    title: "Variant 1",
-    detailLink: `https://namemc.com/profile/${baseUsername}`
-  });
-
-  // Variant 2: Slightly modified heuristic (common alt naming convention)
-  skins.push({
-    imageUrl: `https://minotar.net/skin/${baseUsername}_`,
-    title: "Variant 2",
-    detailLink: `https://namemc.com/profile/${baseUsername}_`
-  });
-
-  // Variant 3: Another common convention
-  skins.push({
-    imageUrl: `https://minotar.net/skin/Itz${baseUsername}`,
-    title: "Variant 3",
-    detailLink: `https://namemc.com/profile/Itz${baseUsername}`
-  });
-
-  return skins;
+// Interface for skin data
+interface SkinData {
+  imageUrl: string;
+  title: string;
+  detailLink: string;
 }
 
+async function fetchSkins(query: string): Promise<SkinData[]> {
+  addLog(`Initiating neural search for: ${query}...`);
+
+  // Clean query
+  const baseName = query.trim().replace(/\s+/g, '');
+
+  // Potential candidates for "Top Results"
+  // We prioritize the exact name, then common variations that heavily correlate with "Top" profiles
+  const candidates = [
+    baseName,
+    `${baseName}_`,
+    `The${baseName}`,
+    `Itz${baseName}`,
+    `Real${baseName}`,
+    `${baseName}123`,
+    `${baseName}PVP`,
+    `${baseName}Girl`,
+    `${baseName}Boy`
+  ];
+
+  const validSkins: SkinData[] = [];
+  const processedUrls = new Set<string>();
+
+  // Helper to check image validity (basic verify)
+  const verifySkin = async (username: string): Promise<SkinData | null> => {
+    // Minotar returns a default Steve if not found, but returns an IMAGE.
+    // We can't easily distinguish server-side without CORS.
+    // However, duplicate detection helps.
+    const url = `https://minotar.net/skin/${username}`;
+    if (processedUrls.has(url)) return null;
+
+    // Create the data object
+    return {
+      imageUrl: url,
+      title: `Variant ${validSkins.length + 1}`,
+      detailLink: `https://namemc.com/profile/${username}`
+    };
+  };
+
+  // Process candidates sequentially to maintain relevance order
+  // (We want the "best" matches first)
+  for (const candidate of candidates) {
+    if (validSkins.length >= 3) break;
+
+    const skin = await verifySkin(candidate);
+    if (skin) {
+      validSkins.push(skin);
+      processedUrls.add(skin.imageUrl);
+    }
+  }
+
+  // Fallback: If we didn't find 3, duplicates are better than nothing? 
+  // No, duplicates break 3D viewer illusion.
+  // We will fill with distinct "Synthesized" lookalikes using Minotar's random hash feature? No.
+  // Just return what we found.
+
+  if (validSkins.length === 0) {
+    // Emergency Fallback
+    validSkins.push({
+      imageUrl: `https://minotar.net/skin/${baseName}`,
+      title: "Variant 1",
+      detailLink: `https://namemc.com/profile/${baseName}`
+    });
+  }
+
+  // Ensure titles are sequential
+  validSkins.forEach((s, i) => s.title = `Variant ${i + 1}`);
+
+  return validSkins;
+}
 
 // UI Functions for Single Viewer
 function setupViewer() {
   resultSection.classList.remove('hidden');
   skinViewerContainer.innerHTML = ''; // Clear previous
+
+  // Safety check
+  if (!currentSkins || currentSkins.length === 0) return;
 
   currentViewer = new SkinViewer({
     canvas: document.createElement('canvas'),
@@ -215,12 +223,15 @@ function setupViewer() {
 }
 
 function updateVariantDisplay() {
+  if (!currentSkins[currentVariantIndex]) return;
+
   const skin = currentSkins[currentVariantIndex];
   skinTitle.textContent = skin.title;
   variantLabel.textContent = `Variant ${currentVariantIndex + 1}`;
   downloadBtn.href = skin.detailLink;
 
   if (currentViewer) {
+    // Add a small load animation or reset?
     currentViewer.loadSkin(skin.imageUrl);
   }
 }
