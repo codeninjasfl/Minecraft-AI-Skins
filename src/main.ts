@@ -226,16 +226,51 @@ function setupViewer() {
   resultSection.scrollIntoView({ behavior: 'smooth' });
 }
 
+
+// Helper to force download
+async function forceDownload(url: string, filename: string) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (e) {
+    console.warn("Force download failed, falling back to direct link", e);
+    window.open(url, '_blank');
+  }
+}
+
 function updateVariantDisplay() {
   if (!currentSkins[currentVariantIndex]) return;
 
   const skin = currentSkins[currentVariantIndex];
   skinTitle.textContent = skin.title;
   variantLabel.textContent = `Variant ${currentVariantIndex + 1}`;
-  downloadBtn.href = skin.detailLink;
+
+  // Set up download button to trigger force download
+  // Remove href to prevent default nav
+  downloadBtn.removeAttribute('href');
+  downloadBtn.style.cursor = 'pointer';
+
+  // Remove any existing click listener to prevent stacking
+  // This assumes downloadBtn is a global reference that doesn't change its DOM element
+  // If downloadBtn itself is re-created, this won't work.
+  // A more robust solution would be to use event delegation or a single listener that reads current state.
+  // For simplicity, we'll just re-assign onclick.
+  downloadBtn.onclick = (e) => {
+    e.preventDefault();
+    const filename = `${skin.title.replace(/\s+/g, '_')}.png`;
+    forceDownload(skin.imageUrl, filename);
+  };
 
   if (currentViewer) {
-    // Add a small load animation or reset?
     currentViewer.loadSkin(skin.imageUrl);
   }
 }
