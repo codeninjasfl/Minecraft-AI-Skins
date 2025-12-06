@@ -144,13 +144,15 @@ async function fetchSkins(query: string): Promise<SkinData[]> {
     // We can't easily distinguish server-side without CORS.
     // However, duplicate detection helps.
     const url = `https://minotar.net/skin/${username}`;
+    const downloadUrl = `https://minotar.net/download/${username}`; // Minotar supports a download endpoint!
+
     if (processedUrls.has(url)) return null;
 
     // Create the data object
     return {
       imageUrl: url,
       title: `Variant ${validSkins.length + 1}`,
-      detailLink: `https://namemc.com/profile/${username}`
+      detailLink: downloadUrl // Direct download endpoint
     };
   };
 
@@ -173,10 +175,11 @@ async function fetchSkins(query: string): Promise<SkinData[]> {
 
   if (validSkins.length === 0) {
     // Emergency Fallback
+    const fallbackImageUrl = `https://minotar.net/skin/${baseName}`;
     validSkins.push({
-      imageUrl: `https://minotar.net/skin/${baseName}`,
+      imageUrl: fallbackImageUrl,
       title: "Variant 1",
-      detailLink: `https://namemc.com/profile/${baseName}`
+      detailLink: fallbackImageUrl // Direct link to texture
     });
   }
 

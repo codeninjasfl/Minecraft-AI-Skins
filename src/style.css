@@ -209,14 +209,19 @@ header {
 
 .skin-card.main-card {
   width: 100%;
+  max-width: 600px;
+  /* Constrain width for better alignment */
+  margin: 0 auto;
   background: #f8fafc;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 2rem;
+  padding: 1.5rem;
+  /* Reduced padding from 2rem */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
+  /* Tighter gap */
 }
 
 .skin-header {
@@ -250,8 +255,10 @@ header {
 /* 3D Preview */
 .skin-preview-wrapper.main-preview {
   width: 100%;
-  max-width: 400px;
-  height: 500px;
+  max-width: 350px;
+  /* Slightly smaller width */
+  height: 400px;
+  /* Reduced from 500px */
   background: #e2e8f0;
   /* Light slate background for viewer */
   border-radius: 12px;
