@@ -152,7 +152,7 @@ async function fetchSkins(query: string): Promise<SkinData[]> {
     return {
       imageUrl: url,
       title: `Variant ${validSkins.length + 1}`,
-      detailLink: downloadUrl // Direct download endpoint
+      detailLink: `${downloadUrl}.png` // Ensure .png
     };
   };
 
@@ -176,10 +176,11 @@ async function fetchSkins(query: string): Promise<SkinData[]> {
   if (validSkins.length === 0) {
     // Emergency Fallback
     const fallbackImageUrl = `https://minotar.net/skin/${baseName}`;
+    // Variant 1: Original
     validSkins.push({
       imageUrl: fallbackImageUrl,
       title: "Variant 1",
-      detailLink: fallbackImageUrl // Direct link to texture
+      detailLink: `${fallbackImageUrl}.png` // Force .png extension for direct file save
     });
   }
 
